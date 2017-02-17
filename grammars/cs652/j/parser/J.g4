@@ -3,14 +3,11 @@ grammar J;
 file:  main* EOF
     ;
 
-main:  classDeclaration
+main:  classDeclaration (fieldDeclaration)*
     ;
 
 classDeclaration
-    :   'class' Identifier
-        ('extends' typeType)?
-        classBody
-    ;
+    :   'class' Identifier ('extends' typeType)? classBody ;
 
 classBody
     :   '{' classBodyDeclaration* '}'
@@ -18,7 +15,6 @@ classBody
 
 classBodyDeclaration
     :   ';'
-    |   'static'? block
     |   memberDeclaration
     ;
 
@@ -27,28 +23,31 @@ memberDeclaration
     |   fieldDeclaration
     ;
 
-/* We use rule this even for void methods which cannot have [] after parameters.
-   This simplifies grammar and we can consider void to be a type, which
-   renders the [] matching as a context-sensitive issue or a semantic check
-   for invalid return type after parsing.
- */
 methodDeclaration
-    :   'void' Identifier formalParameters ('[' ']')*
+    :   (typeType|'void') Identifier formalParameters
         (   methodBody
         |   ';'
         )
     ;
 
+formalParameters
+    :   '(' formalParameterList? ')'
+    ;
+
+formalParameterList
+    :   formalParameter (',' formalParameter)*
+    ;
+
+formalParameter
+    :   typeType variableDeclaratorId
+    ;
+
+methodBody
+    :   block
+    ;
+
 fieldDeclaration
     :   typeType variableDeclarators ';'
-    ;
-
-constDeclaration
-    :   typeType constantDeclarator (',' constantDeclarator)* ';'
-    ;
-
-constantDeclarator
-    :   Identifier ('[' ']')* '=' variableInitializer
     ;
 
 variableDeclarators
@@ -56,29 +55,24 @@ variableDeclarators
     ;
 
 variableDeclarator
-    :   variableDeclaratorId ('=' variableInitializer)?
+    :   variableDeclaratorId? ('=' variableInitializer)?
     ;
 
 variableDeclaratorId
-    :   Identifier ('[' ']')*
+    :   Identifier
     ;
 
 variableInitializer
-    :   arrayInitializer
-    |   expression
-    ;
-
-arrayInitializer
-    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
+    : expression
     ;
 
 typeType
-    :   classOrInterfaceType ('[' ']')*
-    |   primitiveType ('[' ']')*
+    :   classOrInterfaceType
+    |   primitiveType
     ;
 
 classOrInterfaceType
-    :   Identifier typeArguments? ('.' Identifier typeArguments? )*
+    :   Identifier ('.' Identifier )*
     ;
 
 primitiveType
@@ -90,44 +84,6 @@ primitiveType
     |   'long'
     |   'float'
     |   'double'
-    ;
-
-typeArguments
-    :   '<' typeArgument (',' typeArgument)* '>'
-    ;
-
-typeArgument
-    :   typeType
-    |   '?' (('extends' | 'super') typeType)?
-    ;
-
-qualifiedNameList
-    :   qualifiedName (',' qualifiedName)*
-    ;
-
-formalParameters
-    :   '(' formalParameterList? ')'
-    ;
-
-formalParameterList
-    :   formalParameter (',' formalParameter)* (',' lastFormalParameter)?
-    |   lastFormalParameter
-    ;
-
-formalParameter
-    :   typeType variableDeclaratorId
-    ;
-
-lastFormalParameter
-    :   typeType '...' variableDeclaratorId
-    ;
-
-methodBody
-    :   block
-    ;
-
-qualifiedName
-    :   Identifier ('.' Identifier)*
     ;
 
 literal
@@ -145,22 +101,21 @@ block
 blockStatement
     :   localVariableDeclarationStatement
     |   statement
-    |   main
     ;
 
 localVariableDeclarationStatement
-    :    localVariableDeclaration ';'
+    :   localVariableDeclaration ';'
     ;
 
 localVariableDeclaration
-    :   variableModifier* typeType variableDeclarators
+    :  typeType variableDeclarators
     ;
 
 statement
     :   block
-    |   ASSERT expression (':' expression)? ';'
     |   'if' parExpression statement ('else' statement)?
     |   'while' parExpression statement
+    |   'return' expression? ';'
     |   ';'
     |   statementExpression ';'
     |   Identifier ':' statement
@@ -177,10 +132,6 @@ expressionList
     ;
 
 statementExpression
-    :   expression
-    ;
-
-constantExpression
     :   expression
     ;
 
@@ -216,7 +167,7 @@ createdName
     ;
 
 classCreatorRest
-    :   arguments classBody?
+    :   arguments
     ;
 
 explicitGenericInvocation
@@ -394,9 +345,9 @@ FloatingPointLiteral
 
 fragment
 DecimalFloatingPointLiteral
-    :   Digits '.' Digits? ExponentPart? FloatTypeSuffix?
-    |   '.' Digits ExponentPart? FloatTypeSuffix?
-    |   Digits ExponentPart FloatTypeSuffix?
+    :   Digits '.' Digits? FloatTypeSuffix?
+    |   '.' Digits FloatTypeSuffix?
+    |   Digits FloatTypeSuffix?
     |   Digits FloatTypeSuffix
     ;
 
@@ -456,4 +407,12 @@ JavaLetterOrDigit
 //
 
 WS  :  [ \t\r\n\u000C]+ -> skip
+    ;
+
+COMMENT
+    :   '/*' .*? '*/' -> channel(HIDDEN)
+    ;
+
+LINE_COMMENT
+    :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
