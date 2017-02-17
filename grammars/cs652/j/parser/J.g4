@@ -1,9 +1,9 @@
 grammar J;
 
-file:  main* EOF
+file:  main* (fieldDeclaration)* EOF
     ;
 
-main:  classDeclaration (fieldDeclaration)*
+main:  classDeclaration
     ;
 
 classDeclaration
@@ -47,7 +47,7 @@ methodBody
     ;
 
 fieldDeclaration
-    :   typeType variableDeclarators ';'
+    :   (typeType)? variableDeclarators ';'
     ;
 
 variableDeclarators
@@ -59,7 +59,7 @@ variableDeclarator
     ;
 
 variableDeclaratorId
-    :   Identifier
+    :   classOrInterfaceType
     ;
 
 variableInitializer
@@ -72,7 +72,7 @@ typeType
     ;
 
 classOrInterfaceType
-    :   Identifier ('.' Identifier )*
+    :   Identifier ('.' Identifier ('(' (expression (',' expression)*)? ')')? )*
     ;
 
 primitiveType
