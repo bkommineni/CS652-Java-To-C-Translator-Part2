@@ -1,9 +1,9 @@
 grammar J;
 
-file:  main* (fieldDeclaration)* EOF
+file:  classDeclaration* main EOF
     ;
 
-main:  classDeclaration
+main:  (fieldDeclaration | statement)*
     ;
 
 classDeclaration
@@ -15,6 +15,7 @@ classBody
 
 classBodyDeclaration
     :   ';'
+    |   block
     |   memberDeclaration
     ;
 
@@ -47,7 +48,7 @@ methodBody
     ;
 
 fieldDeclaration
-    :   (typeType)? variableDeclarators ';'
+    :   typeType variableDeclarators ';'
     ;
 
 variableDeclarators
@@ -55,15 +56,20 @@ variableDeclarators
     ;
 
 variableDeclarator
-    :   variableDeclaratorId? ('=' variableInitializer)?
+    :   variableDeclaratorId ('=' variableInitializer)?
     ;
 
 variableDeclaratorId
-    :   classOrInterfaceType
+    :   Identifier ('[' ']')*
     ;
 
 variableInitializer
-    : expression
+    :   arrayInitializer
+    |   expression
+    ;
+
+arrayInitializer
+    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
     ;
 
 typeType
@@ -72,7 +78,7 @@ typeType
     ;
 
 classOrInterfaceType
-    :   Identifier ('.' Identifier ('(' (expression (',' expression)*)? ')')? )*
+    :   Identifier ('.' Identifier )*
     ;
 
 primitiveType
@@ -89,6 +95,7 @@ primitiveType
 literal
     :   IntegerLiteral
     |   FloatingPointLiteral
+    |   StringLiteral
     |   'null'
     ;
 
@@ -145,7 +152,7 @@ expression
     |   expression '(' expressionList? ')'
     |   'new' creator
     |   '(' typeType ')' expression
-        expression
+    |   expression ('=') expression
     ;
 
 primary
@@ -159,15 +166,16 @@ primary
     ;
 
 creator
-    :   createdName classCreatorRest ;
+    :  createdName classCreatorRest
+    ;
 
 createdName
-    :   Identifier ('.' Identifier)*
+    :   Identifier  ('.' Identifier )*
     |   primitiveType
     ;
 
 classCreatorRest
-    :   arguments
+    :   arguments classBody?
     ;
 
 explicitGenericInvocation
@@ -185,9 +193,9 @@ explicitGenericInvocationSuffix
     ;
 
 arguments
-    :   '('  ')'
+    :   '(' expressionList? ')'
     ;
-
+/*-------------------------------------------------------------------------------------*/
 // LEXER
 
 // §3.9 Keywords
@@ -354,6 +362,45 @@ DecimalFloatingPointLiteral
 fragment
 FloatTypeSuffix
     :   [fFdD]
+    ;
+
+// §3.10.5 String Literals
+StringLiteral
+    :   '"' StringCharacters? '"'
+    ;
+fragment
+StringCharacters
+    :   StringCharacter+
+    ;
+fragment
+StringCharacter
+    :   ~["\\]
+    |   EscapeSequence
+    ;
+
+// §3.10.6 Escape Sequences for Character and String Literals
+fragment
+EscapeSequence
+    :   '\\' [btnfr"'\\]
+    |   OctalEscape
+    |   UnicodeEscape
+    ;
+
+fragment
+OctalEscape
+    :   '\\' OctalDigit
+    |   '\\' OctalDigit OctalDigit
+    |   '\\' ZeroToThree OctalDigit OctalDigit
+    ;
+
+fragment
+UnicodeEscape
+    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+    ;
+
+fragment
+ZeroToThree
+    :   [0-3]
     ;
 
 // §3.10.7 The Null Literal
