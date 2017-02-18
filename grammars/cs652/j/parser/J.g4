@@ -56,7 +56,7 @@ variableDeclarators
     ;
 
 variableDeclarator
-    :   variableDeclaratorId ('=' variableInitializer)?
+    :   variableDeclaratorId
     ;
 
 variableDeclaratorId
@@ -99,8 +99,6 @@ literal
     |   'null'
     ;
 
-// STATEMENTS / BLOCKS
-
 block
     :   '{' blockStatement* '}'
     ;
@@ -127,8 +125,6 @@ statement
     |   statementExpression ';'
     |   Identifier ':' statement
     ;
-
-// EXPRESSIONS
 
 parExpression
     :   '(' expression ')'
@@ -195,263 +191,22 @@ explicitGenericInvocationSuffix
 arguments
     :   '(' expressionList? ')'
     ;
-/*-------------------------------------------------------------------------------------*/
-// LEXER
-
-// §3.9 Keywords
-
-CLASS         : 'class';
-DOUBLE        : 'double';
-ELSE          : 'else';
-EXTENDS       : 'extends';
-FLOAT         : 'float';
-IF            : 'if';
-INT           : 'int';
-LONG          : 'long';
-NEW           : 'new';
-RETURN        : 'return';
-SHORT         : 'short';
-SUPER         : 'super';
-THIS          : 'this';
-VOID          : 'void';
-WHILE         : 'while';
-
-// §3.10.1 Integer Literals
 
 IntegerLiteral
-    :   DecimalIntegerLiteral
-    |   HexIntegerLiteral
-    |   OctalIntegerLiteral
-    |   BinaryIntegerLiteral
+    :    [0-9]+
     ;
-
-fragment
-DecimalIntegerLiteral
-    :   DecimalNumeral IntegerTypeSuffix?
-    ;
-
-fragment
-HexIntegerLiteral
-    :   HexNumeral IntegerTypeSuffix?
-    ;
-
-fragment
-OctalIntegerLiteral
-    :   OctalNumeral IntegerTypeSuffix?
-    ;
-
-fragment
-BinaryIntegerLiteral
-    :   BinaryNumeral IntegerTypeSuffix?
-    ;
-
-fragment
-IntegerTypeSuffix
-    :   [lL]
-    ;
-
-fragment
-DecimalNumeral
-    :   '0'
-    |   NonZeroDigit (Digits? | Underscores Digits)
-    ;
-
-fragment
-Digits
-    :   Digit (DigitOrUnderscore* Digit)?
-    ;
-
-fragment
-Digit
-    :   '0'
-    |   NonZeroDigit
-    ;
-
-fragment
-NonZeroDigit
-    :   [1-9]
-    ;
-
-fragment
-DigitOrUnderscore
-    :   Digit
-    |   '_'
-    ;
-
-fragment
-Underscores
-    :   '_'+
-    ;
-
-fragment
-HexNumeral
-    :   '0' [xX] HexDigits
-    ;
-
-fragment
-HexDigits
-    :   HexDigit (HexDigitOrUnderscore* HexDigit)?
-    ;
-
-fragment
-HexDigit
-    :   [0-9a-fA-F]
-    ;
-
-fragment
-HexDigitOrUnderscore
-    :   HexDigit
-    |   '_'
-    ;
-
-fragment
-OctalNumeral
-    :   '0' Underscores? OctalDigits
-    ;
-
-fragment
-OctalDigits
-    :   OctalDigit (OctalDigitOrUnderscore* OctalDigit)?
-    ;
-
-fragment
-OctalDigit
-    :   [0-7]
-    ;
-
-fragment
-OctalDigitOrUnderscore
-    :   OctalDigit
-    |   '_'
-    ;
-
-fragment
-BinaryNumeral
-    :   '0' [bB] BinaryDigits
-    ;
-
-fragment
-BinaryDigits
-    :   BinaryDigit (BinaryDigitOrUnderscore* BinaryDigit)?
-    ;
-
-fragment
-BinaryDigit
-    :   [01]
-    ;
-
-fragment
-BinaryDigitOrUnderscore
-    :   BinaryDigit
-    |   '_'
-    ;
-
-// §3.10.2 Floating-Point Literals
 
 FloatingPointLiteral
-    :   DecimalFloatingPointLiteral ;
-
-fragment
-DecimalFloatingPointLiteral
-    :   Digits '.' Digits? FloatTypeSuffix?
-    |   '.' Digits FloatTypeSuffix?
-    |   Digits FloatTypeSuffix?
-    |   Digits FloatTypeSuffix
+    :   [0-9]+ '.' [0-9]+
     ;
 
-fragment
-FloatTypeSuffix
-    :   [fFdD]
-    ;
-
-// §3.10.5 String Literals
 StringLiteral
-    :   '"' StringCharacters? '"'
+    :   '"' .*? '"'
     ;
-fragment
-StringCharacters
-    :   StringCharacter+
-    ;
-fragment
-StringCharacter
-    :   ~["\\]
-    |   EscapeSequence
-    ;
-
-// §3.10.6 Escape Sequences for Character and String Literals
-fragment
-EscapeSequence
-    :   '\\' [btnfr"'\\]
-    |   OctalEscape
-    |   UnicodeEscape
-    ;
-
-fragment
-OctalEscape
-    :   '\\' OctalDigit
-    |   '\\' OctalDigit OctalDigit
-    |   '\\' ZeroToThree OctalDigit OctalDigit
-    ;
-
-fragment
-UnicodeEscape
-    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
-    ;
-
-fragment
-ZeroToThree
-    :   [0-3]
-    ;
-
-// §3.10.7 The Null Literal
-
-NullLiteral
-    :   'null'
-    ;
-
-// §3.11 Separators
-
-LPAREN          : '(';
-RPAREN          : ')';
-LBRACE          : '{';
-RBRACE          : '}';
-LBRACK          : '[';
-RBRACK          : ']';
-SEMI            : ';';
-COMMA           : ',';
-DOT             : '.';
-
-// §3.12 Operators
-
-ASSIGN          : '=';
-
-// §3.8 Identifiers (must appear after all keywords in the grammar)
 
 Identifier
-    :   JavaLetter JavaLetterOrDigit*
+    :   [a-zA-Z] [a-zA-Z0-9]*
     ;
-
-fragment
-JavaLetter
-    :   [a-zA-Z$_] // these are the "java letters" below 0x7F
-    |   // covers all characters above 0x7F which are not a surrogate
-        ~[\u0000-\u007F\uD800-\uDBFF]
-    |   // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-        [\uD800-\uDBFF] [\uDC00-\uDFFF]
-    ;
-
-fragment
-JavaLetterOrDigit
-    :   [a-zA-Z0-9$_] // these are the "java letters or digits" below 0x7F
-    |   // covers all characters above 0x7F which are not a surrogate
-        ~[\u0000-\u007F\uD800-\uDBFF]
-    |   // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-        [\uD800-\uDBFF] [\uDC00-\uDFFF]
-    ;
-
-//
-// Whitespace and comments
-//
 
 WS  :  [ \t\r\n\u000C]+ -> skip
     ;
